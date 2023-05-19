@@ -1,6 +1,7 @@
 FROM yiisoftware/yii2-php:7.4-fpm-nginx
 
 # Создаем директории для хранения логов
+RUN rm -fr /var/log/nginx
 RUN mkdir -p /var/log/nginx
 RUN mkdir -p /app/runtime/nginx
 
