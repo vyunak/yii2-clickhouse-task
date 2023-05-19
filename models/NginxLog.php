@@ -5,6 +5,7 @@ namespace app\models;
 use bashkarev\clickhouse\ActiveRecord;
 use Yii;
 use yii\base\Model;
+use yii\validators\Validator;
 
 /**
  *
@@ -14,6 +15,8 @@ use yii\base\Model;
  */
 class NginxLog extends ActiveRecord
 {
+    public const TIME_PATTERN = '/\[(\d{2}\/\w+\/\d{4}:\d{2}:\d{2}:\d{2} \+\d{4})\]/';
+    public const TIME_PATTERN_VALIDATE = '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/';
     public const PATH_TO_ACCESS_FILE = '/app/runtime/nginx/access.log';
 
     /**
@@ -30,7 +33,8 @@ class NginxLog extends ActiveRecord
     public function rules()
     {
         return [
-            [['created_at'], 'match', 'pattern' => '^([1-9]\d{3}|0\d{3})-(0[1-9]|1[0-2])-([0-2][1-9]|3[0-1]) (0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$'],
+            [['hash_key', 'message'], 'safe'],
+            [['created_at'], 'match', 'pattern' => self::TIME_PATTERN_VALIDATE, 'not' => false],
         ];
     }
 
@@ -53,11 +57,10 @@ class NginxLog extends ActiveRecord
         $this->hash_key = $data['hash'];
         $this->message = $data['line'];
 
-        $pattern = '/\[(\d{2}\/\w+\/\d{4}:\d{2}:\d{2}:\d{2} \+\d{4})\]/';
-        preg_match($pattern, $data['line'], $matches);
+        preg_match_all(self::TIME_PATTERN, $data['line'], $matches);
 
-        if (isset($matches[1])) {
-            $date = $matches[1];
+        if (isset($matches[1][0])) {
+            $date = $matches[1][0];
         } else {
             return false;
         }
@@ -65,5 +68,15 @@ class NginxLog extends ActiveRecord
         $this->created_at = Yii::$app->formatter->asDatetime($date, 'yyyy-MM-dd HH:mm:ss');;
 
         return true;
+    }
+
+    public static function validateTime($input)
+    {
+        $error = null;
+
+        $validator = Validator::createValidator('match', null, [], ['pattern' => NginxLog::TIME_PATTERN_VALIDATE]);
+        $validator->validate($input, $error);
+
+        return empty($error);
     }
 }

@@ -4,8 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    #image: 'yiisoftware/yii2-php:7.4-fpm-nginx'
-    container_name: yii2_app
+    container_name: web
     volumes:
       - '~/.composer-docker/cache:/root/.composer/cache:delegated'
       - './:/app:delegated'
@@ -13,6 +12,12 @@ services:
       - 8808:80
     depends_on:
       - clickhouse
+    environment:
+      - CLICKHOUSE_DB_HOST=clickhouse
+      - CLICKHOUSE_DB_PORT=8123
+      - CLICKHOUSE_DB_NAME=default
+      - CLICKHOUSE_DB_USER=default
+      - CLICKHOUSE_DB_PASSWORD=yii2_dev
     networks:
       - mynetwork
 
