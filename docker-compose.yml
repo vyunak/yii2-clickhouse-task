@@ -1,0 +1,35 @@
+version: '2'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    #image: 'yiisoftware/yii2-php:7.4-fpm-nginx'
+    container_name: yii2_app
+    volumes:
+      - '~/.composer-docker/cache:/root/.composer/cache:delegated'
+      - './:/app:delegated'
+    ports:
+      - 8808:80
+    depends_on:
+      - clickhouse
+    networks:
+      - mynetwork
+
+  clickhouse:
+    image: bitnami/clickhouse
+    container_name: clickhouse
+    ports:
+      - 8223:8123
+      - 9200:9000
+    volumes:
+      - ./clickhouse/data:/bitnami/clickhouse/data
+      - ./clickhouse/config:/bitnami/clickhouse/config
+    networks:
+      - mynetwork
+    environment:
+      - CLICKHOUSE_ADMIN_PASSWORD=yii2_dev
+      
+networks:
+  mynetwork:
+    driver: bridge
